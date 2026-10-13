@@ -77,11 +77,11 @@ The old `mystudyai ask` and `mystudyai study` commands have been **removed**. Th
 
 **Your existing Codex/Pi agent authors questions; the local MyStudyAI CLI checks source references, grades choices and records spaced-review dates. No LLM API is involved.**
 
-1. Import your real lecture first: \`mystudyai import "Physiology.pdf"\`.
+1. Import your real lecture first: `mystudyai import "Physiology.pdf"`.
 2. In Codex or Pi, ask: *"Using the medical-study skill and my imported lecture, create 10 high-quality misconception-based MCQs for cardiac output. Write them to the quiz bank, verify original slide/page citations and validate them."*
 3. Or create the file yourself:
 
-\`\`\`bash
+```bash
 mystudyai quiz init "cardiac output"          # Creates an empty private bank
 # Your agent edits library/quizzes/cardiac-output.json and adds sourced questions.
 mystudyai quiz validate library/quizzes/cardiac-output.json
@@ -89,11 +89,11 @@ mystudyai quiz run library/quizzes/cardiac-output.json
 mystudyai quiz due library/quizzes/cardiac-output.json
 mystudyai quiz mistakes library/quizzes/cardiac-output.json
 mystudyai quiz stats library/quizzes/cardiac-output.json
-\`\`\`
+```
 
-Question bank format (\`correct_index\` is **zero-based**; \`source.name\` and \`source.location\` must match your imported course metadata):
+Question bank format (`correct_index` is **zero-based**; `source.name` and `source.location` must match your imported course metadata):
 
-\`\`\`json
+```json
 {
   "version": 1,
   "title": "Cardiac output",
@@ -109,11 +109,11 @@ Question bank format (\`correct_index\` is **zero-based**; \`source.name\` and \
     }
   ]
 }
-\`\`\`
+```
 
 This is an **illustrative example**—only use the source reference if it actually exists in your imported lecture. There is no built-in medical question generator; the authenticated harness writes the bank. Validation confirms the lecture location exists but **does not independently verify the medical correctness of a question or explanation**.
 
-The terminal quiz shows the explanation only after answering, asks whether a correct answer was confident, and records misses under the cited concept. Progress is stored locally in \`library/quiz-progress.json\`. Unseen and due questions come first; \`quiz run --all\` forces the full bank. A missed answer is scheduled for the next UTC day; successful reviews extend from 1 day to 6 days to increasing intervals, according to a simple SM-2-inspired rule. This is a **study reminder** rather than a scientifically validated medical competence metric. There is no cloud sync, automatic notifications or Pi popup yet.
+The terminal quiz shows the explanation only after answering, asks whether a correct answer was confident, and records misses under the cited concept. Progress is stored locally in `library/quiz-progress.json`. Unseen and due questions come first; `quiz run --all` forces the full bank. A missed answer is scheduled for the next UTC day; successful reviews extend from 1 day to 6 days to increasing intervals, according to a simple SM-2-inspired rule. This is a **study reminder** rather than a scientifically validated medical competence metric. There is no cloud sync, automatic notifications or Pi popup yet.
 
 ## Pictures, lectures and citations
 
