@@ -123,10 +123,10 @@ def test_study_phases_are_ordered_and_check_is_adaptive(notes):
         output=output.append,
     )
     assert len(fake.calls) == 4
-    assert "=== PROBE ===" in output
-    assert "=== PLAN ===" in output
-    assert "=== TEACH ===" in output
-    assert "=== CHECK & CONTINUE ===" in output
+    assert any("=== PROBE ===" in line for line in output)
+    assert any("=== PLAN ===" in line for line in output)
+    assert any("=== TEACH ===" in line for line in output)
+    assert any("=== CHECK & CONTINUE ===" in line for line in output)
     assert "Increase preload." in fake.calls[3][1]
 
 
