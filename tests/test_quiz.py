@@ -193,6 +193,8 @@ def test_cli_scaffold_validate_due_stats_and_errors(library, capsys):
     assert "Due now (UTC): 2" in capsys.readouterr().out
     assert main(["quiz", "stats", str(scaffold_path), "--library", str(library)]) == 0
     assert "2 new" in capsys.readouterr().out
+    assert main(["quiz", "mistakes", str(scaffold_path), "--library", str(library)]) == 0
+    assert "Questions previously missed: 0" in capsys.readouterr().out
     assert main(["quiz", "validate", str(library / "quizzes" / "missing.json"),
                  "--library", str(library)]) == 1
     assert "Quiz error" in capsys.readouterr().err
@@ -207,3 +209,15 @@ def test_no_billed_api_used_by_quizzes(library, monkeypatch):
     bank = write_bank(library)
     assert main(["quiz", "validate", str(bank), "--library", str(library)]) == 0
     assert main(["quiz", "due", str(bank), "--library", str(library)]) == 0
+
+def test_mistake_report_includes_source_citation(library, capsys):
+    bank = write_bank(library)
+    _, qs = load_bank(bank, library)
+    inputs = iter(["b", "q"])
+    run_quiz(qs, library, input_fn=lambda _: next(inputs),
+             output_fn=lambda _: None, today=date(2026, 10, 13))
+    assert main(["quiz", "mistakes", str(bank), "--library", str(library)]) == 0
+    out = capsys.readouterr().out
+    assert "Cardiac output" in out
+    assert "1 misses" in out
+    assert "slide 7" in out
