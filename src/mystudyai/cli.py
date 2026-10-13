@@ -47,7 +47,57 @@ def main(argv: list[str] | None = None) -> int:
     context_cmd.add_argument("--library", type=Path, default=Path("library"))
     context_cmd.add_argument("--limit", type=int, default=6, help="Maximum number of cited excerpts (1–10)")
 
+    quiz = subparsers.add_parser("quiz", help="Offline multiple-choice quizzes and spaced repetition")
+    quiz_sub = quiz.add_subparsers(dest="quiz_action", required=True)
+    init = quiz_sub.add_parser("init", help="Create an empty question bank for the active agent to fill")
+    init.add_argument("topic", help="Course topic")
+    init.add_argument("--library", type=Path, default=Path("library"))
+    for action in ("validate", "run", "due", "stats"):
+        sub = quiz_sub.add_parser(action)
+        sub.add_argument("bank", type=Path, help="JSON bank inside library/quizzes/")
+        sub.add_argument("--library", type=Path, default=Path("library"))
+        if action == "run":
+            sub.add_argument("--all", action="store_true",
+                             help="Quiz every question, not just those due for review")
+            sub.add_argument("--limit", type=int, default=10,
+                             help="Maximum questions this session (1–100)")
+
     args = parser.parse_args(argv)
+    if args.command == "quiz":
+        from .quiz import QuizError, scaffold, load_bank, due, read_progress, stats, run_quiz
+        try:
+            if args.quiz_action == "init":
+                path = scaffold(args.topic, args.library)
+                print(f"Created empty bank: {path}")
+                print("Have your Codex/Pi agent add questions with source-cited answers, then run quiz validate.")
+                return 0
+            title, questions = load_bank(args.bank, args.library)
+            if args.quiz_action == "validate":
+                print(f"Validated '{title}': {len(questions)} questions with imported lecture locations.")
+                print("Source references exist, but medical accuracy still requires checking.")
+                return 0
+            progress = read_progress(args.library)
+            if args.quiz_action == "due":
+                ready = due(questions, progress)
+                print(f"Due now (UTC): {len(ready)} of {len(questions)} questions in '{title}'.")
+                for q in ready:
+                    print(f"- {q.id}: {q.concept} [{q.source}, {q.location}]")
+                return 0
+            if args.quiz_action == "stats":
+                report = stats(questions, progress)
+                print(f"{title}: {report['practiced']}/{report['questions']} practiced; "
+                      f"{report['new']} new; {report['due']} due; "
+                      f"{report['last_attempt_incorrect']} last missed.")
+                return 0
+            run_quiz(questions, args.library, all_questions=args.all, limit=args.limit)
+            return 0
+        except (QuizError, OSError, ValueError) as exc:
+            print(f"Quiz error: {exc}", file=sys.stderr)
+            return 1
+        except (EOFError, KeyboardInterrupt):
+            print("\nQuiz stopped.", file=sys.stderr)
+            return 130
+
     if args.command == "figures":
         from .figures import nearby_figures
         figures = nearby_figures(args.library, args.topic)
