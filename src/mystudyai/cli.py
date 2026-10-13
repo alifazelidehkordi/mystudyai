@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     init = quiz_sub.add_parser("init", help="Create an empty question bank for the active agent to fill")
     init.add_argument("topic", help="Course topic")
     init.add_argument("--library", type=Path, default=Path("library"))
-    for action in ("validate", "run", "due", "stats"):
+    for action in ("validate", "run", "due", "stats", "mistakes"):
         sub = quiz_sub.add_parser(action)
         sub.add_argument("bank", type=Path, help="JSON bank inside library/quizzes/")
         sub.add_argument("--library", type=Path, default=Path("library"))
@@ -82,6 +82,18 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Due now (UTC): {len(ready)} of {len(questions)} questions in '{title}'.")
                 for q in ready:
                     print(f"- {q.id}: {q.concept} [{q.source}, {q.location}]")
+                return 0
+            if args.quiz_action == "mistakes":
+                records = progress["cards"]
+                missed = [
+                    (q, records[q.key]) for q in questions
+                    if q.key in records and records[q.key].get("misses", 0) > 0
+                ]
+                print(f"Questions previously missed: {len(missed)} in '{title}'.")
+                for q, record in missed:
+                    print(f"- {q.concept} ({q.id}): {record['misses']} misses; "
+                          f"next review {record['due_date']} UTC "
+                          f"[{q.source}, {q.location}]")
                 return 0
             if args.quiz_action == "stats":
                 report = stats(questions, progress)
