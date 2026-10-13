@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+# User's lecture material is private by default: never commit imported notes.
+library/
+course-materials/
+*.pdf
+*.pptx
+*.docx
+.env
