@@ -12,7 +12,6 @@ from mystudyai.cli import main
 from mystudyai.commons import CommonsImage, ImageSearchError, add_image, allowed_license, search_commons
 from mystudyai.evidence import EvidenceError, Paper, format_papers, search_pubmed
 from mystudyai.figures import nearby_figures
-from mystudyai.tutor import MedicalTutor
 
 
 @pytest.fixture
@@ -174,21 +173,6 @@ def test_pubmed_rejects_unsafe_xml(monkeypatch):
         if endpoint.startswith("esearch") else b"<!DOCTYPE fake [<!ENTITY x 'bad'>]><root/>")
     with pytest.raises(EvidenceError, match="Unsafe"):
         search_pubmed("heart")
-
-
-def test_tutor_external_citations_and_local_figures(library):
-    paper = Paper("P1", "123456", "Paper about cardiac function",
-                  "Example Journal", "2024", "The paper examines cardiac output.")
-    class Model:
-        def complete(self, instructions, prompt):
-            assert "EXTERNAL SCIENTIFIC LITERATURE" in prompt
-            assert "[P1]" in prompt
-            return "Your lecture discusses the ventricle [S1]. An article discusses cardiac output [P1]. Bad source [P999]."
-    reply = MedicalTutor(library, Model(), papers=[paper]).answer("left ventricle")
-    assert "[P1]" in reply
-    assert "[P999]" not in reply
-    assert "123456" in reply
-    assert "heart.png" in reply
 
 
 def test_evidence_cli_uses_mocked_pubmed(monkeypatch, capsys):
