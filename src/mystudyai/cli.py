@@ -21,7 +21,52 @@ def main(argv: list[str] | None = None) -> int:
     inspector = subparsers.add_parser("inspect", help="Show document provenance and import warnings")
     inspector.add_argument("folder", type=Path, help="Imported document folder")
 
+    previews = subparsers.add_parser("sources", help="Preview lecture excerpts locally (no API request)")
+    previews.add_argument("topic", help="Question or topic")
+    previews.add_argument("--library", type=Path, default=Path("library"))
+
+    for command in ("ask", "study"):
+        tutor_cmd = subparsers.add_parser(command, help="Grounded medical tutor (requires explicit upload opt-in)")
+        tutor_cmd.add_argument("topic", help="Your question (ask), or study topic (study)")
+        tutor_cmd.add_argument("--library", type=Path, default=Path("library"))
+        tutor_cmd.add_argument("--model", default="gpt-4.1-mini", help="OpenAI API model identifier")
+        tutor_cmd.add_argument("--send-notes", action="store_true",
+                               help="Allow sending selected lecture excerpts to the OpenAI API")
+
     args = parser.parse_args(argv)
+    if args.command in {"sources", "ask", "study"}:
+        from .retrieval import retrieve
+
+        excerpts = retrieve(args.topic, args.library)
+        if not excerpts:
+            print("No matching imported lecture text found. Import notes first or try another topic.")
+            return 1
+        if args.command == "sources":
+            for ex in excerpts:
+                print(f"{ex.citation}\n  {ex.text[:320].replace(chr(10), ' ')}\n")
+            return 0
+
+        if not args.send_notes:
+            print("No data sent. Preview selected excerpts using 'mystudyai sources TOPIC'.", file=sys.stderr)
+            print("To send those excerpts to OpenAI, re-run with --send-notes.", file=sys.stderr)
+            return 2
+        from .model import ModelError, OpenAIResponsesClient
+        from .tutor import MedicalTutor, interactive_study
+
+        try:
+            tutor = MedicalTutor(args.library, OpenAIResponsesClient(model=args.model))
+            if args.command == "ask":
+                print(tutor.answer(args.topic))
+            else:
+                interactive_study(tutor, args.topic)
+        except (ModelError, EOFError, KeyboardInterrupt) as exc:
+            if isinstance(exc, (KeyboardInterrupt, EOFError)):
+                print("\nStudy session ended.", file=sys.stderr)
+            else:
+                print(f"Tutor error: {exc}", file=sys.stderr)
+            return 1
+        return 0
+
     if args.command == "import":
         failures = 0
         for source in args.files:
