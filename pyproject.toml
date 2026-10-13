@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10"]
+dev = ["pytest>=8,<10", "Pillow>=10,<13"]
 
 [project.scripts]
 mystudyai = "mystudyai.cli:main"
