@@ -28,7 +28,40 @@ This is a **harness-native** teaching workflow, inspired by the concepts in [amo
 
 **4 — Check and adapt:** Evaluate the student's answer; explain the misconception with source citations, revisit the necessary prerequisite, or advance one node. Mix anatomy/physiology/pathophysiology and application where appropriate. Never present attractive but incorrect medical distractors as facts.
 
-**5 — Reinforce:** End with a short self-test and a compact recap of prerequisites, links between concepts, weak areas and what to review next. With permission, write a Markdown session summary under `library/study-sessions/` so it stays private by default. Do not claim persistent memory without saving it.
+**5 — Reinforce:** End with a short self-test, use the offline question bank and spaced review workflow below when desired, and summarize prerequisites, links between concepts, weak areas and what to review next. With permission, write a Markdown session summary under `library/study-sessions/` so it stays private by default. Do not claim persistent memory without saving it.
+
+## Quiz banks and spaced repetition (portable, no model API)
+
+The **current Codex/Pi agent** authors MCQs based on sources; the local Python CLI grades them and schedules reviews. It is not a model service, and there is no paid LLM API involved.
+
+1. If the learner asks to prepare exam questions, first run `mystudyai context "topic"` and inspect source excerpts and original slide figures. Distinguish what the professor said from independently verified clinical concepts.
+2. Run `mystudyai quiz init "topic"` to create `library/quizzes/topic.json`. This creates a private **empty** question bank. You (the agent) must then edit it to include high-quality questions.
+3. Follow this JSON format, with 0-based correct index; **use real source names and exact locations from imported `document.json`**, never fabricate these references:
+
+```json
+{
+  "version": 1,
+  "title": "Topic from lecture",
+  "questions": [
+    {
+      "id": "topic-q1",
+      "concept": "Exam concept",
+      "stem": "A conceptual question?",
+      "options": ["Plausible answer A", "Plausible answer B", "Plausible answer C"],
+      "correct_index": 1,
+      "explanation": "Why the correct option follows from the relevant mechanism, including limitations.",
+      "source": {"name": "Exact imported lecture filename", "location": "page 3"}
+    }
+  ]
+}
+```
+
+4. Make **every** option a parallel, concise claim; write realistic misconception-driven distractors, not jokes or obvious throwaways. Do not make a longer or more specific correct answer. Avoid unsupported dosage guidance, fabricated clinical images, or questions based on unverified notes. Keep explanations rooted in the cited professor's lecture.
+5. Run `mystudyai quiz validate library/quizzes/topic.json`. This checks JSON and whether source pages/slides **exist**. It does **not** medically verify correctness: manually review each question, correct answer and explanation before playing.
+6. Run `mystudyai quiz run library/quizzes/topic.json` for locally graded, due-only practice (new and due cards). The CLI prints feedback **after** each answer and saves progress under `library/quiz-progress.json` after each answered question. For full practice, use `--all`. Encourage the learner to respond personally; do not answer on their behalf.
+7. Use `mystudyai quiz due ...`, `mystudyai quiz mistakes ...` and `mystudyai quiz stats ...` to pick weaker concepts for the next session. Review scheduling is a simple SM-2-style *study aid*, not validated competency assessment or certified medical mastery.
+
+**Important:** Do not write lecture files, question banks or learner performance to the public Git repository. They belong in the gitignored `library/` directory. If question content changes, its review history intentionally starts fresh to avoid falsely treating a changed answer as mastered. There is no automatic synchronization across devices.
 
 ## Visuals and medical accuracy
 

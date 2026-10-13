@@ -73,6 +73,48 @@ The old `mystudyai ask` and `mystudyai study` commands have been **removed**. Th
 
 **Course-first does not mean lecture-infallible.** The professor's course determines exam emphasis, but authoritative medical references should be used to flag disputed material. A PubMed record/abstract is a research lead, not automatic verification of a scientific claim.
 
+## Step 4: Quiz practice and spaced review (offline)
+
+**Your existing Codex/Pi agent authors questions; the local MyStudyAI CLI checks source references, grades choices and records spaced-review dates. No LLM API is involved.**
+
+1. Import your real lecture first: `mystudyai import "Physiology.pdf"`.
+2. In Codex or Pi, ask: *"Using the medical-study skill and my imported lecture, create 10 high-quality misconception-based MCQs for cardiac output. Write them to the quiz bank, verify original slide/page citations and validate them."*
+3. Or create the file yourself:
+
+```bash
+mystudyai quiz init "cardiac output"          # Creates an empty private bank
+# Your agent edits library/quizzes/cardiac-output.json and adds sourced questions.
+mystudyai quiz validate library/quizzes/cardiac-output.json
+mystudyai quiz run library/quizzes/cardiac-output.json
+mystudyai quiz due library/quizzes/cardiac-output.json
+mystudyai quiz mistakes library/quizzes/cardiac-output.json
+mystudyai quiz stats library/quizzes/cardiac-output.json
+```
+
+Question bank format (`correct_index` is **zero-based**; `source.name` and `source.location` must match your imported course metadata):
+
+```json
+{
+  "version": 1,
+  "title": "Cardiac output",
+  "questions": [
+    {
+      "id": "co-01",
+      "concept": "Cardiac output relationship",
+      "stem": "Which expression represents cardiac output?",
+      "options": ["HR × SV", "HR + SV", "HR / SV", "SV / HR"],
+      "correct_index": 0,
+      "explanation": "Cardiac output is the product of heart rate and stroke volume.",
+      "source": {"name": "Physiology.pdf", "location": "page 7"}
+    }
+  ]
+}
+```
+
+This is an **illustrative example**—only use the source reference if it actually exists in your imported lecture. There is no built-in medical question generator; the authenticated harness writes the bank. Validation confirms the lecture location exists but **does not independently verify the medical correctness of a question or explanation**.
+
+The terminal quiz shows the explanation only after answering, asks whether a correct answer was confident, and records misses under the cited concept. Progress is stored locally in `library/quiz-progress.json`. Unseen and due questions come first; `quiz run --all` forces the full bank. A missed answer is scheduled for the next UTC day; successful reviews extend from 1 day to 6 days to increasing intervals, according to a simple SM-2-inspired rule. This is a **study reminder** rather than a scientifically validated medical competence metric. There is no cloud sync, automatic notifications or Pi popup yet.
+
 ## Pictures, lectures and citations
 
 - Start with images from imported professor slides and lecture PDFs. PDF text has page references; PPTX text has slide references; DOCX has element markers instead of reliable page numbers.
@@ -112,6 +154,6 @@ Repository architecture:
 1. ✅ Import notes, preserve original source references and extract lecture figures.
 2. ✅ Deliver foundations-first tutoring through subscription-authenticated agent skills (no separate LLM API).
 3. ✅ Find lecturer images and search attributed Commons/PubMed resources when needed.
-4. ⏳ Port optional quiz UI, session logs, progress tracking, spaced repetition.
-5. ⏳ Extend optional Pi/Obsidian diagram and learning-log features without losing harness portability.
+4. ✅ Local cited MCQ banks, interactive terminal quiz grading, concept-level mistakes and spaced repetition; optional Pi quiz popups are still future work.
+5. ⏳ Add optional Pi/Obsidian quiz popup, diagram and Markdown session-log extensions without losing harness portability.
 
